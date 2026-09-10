@@ -13,7 +13,7 @@ try{
  const sql=await fs.readFile('tests/fixtures/legacy-sqlite.sql','utf8');for(const statement of sql.split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await DB.prepare(statement).run();
  const routes={};
  for(const key of ['auth','data','focus','assistant']){
- const out=path.join(temp,key+'.mjs');await build({entryPoints:[`app/api/${key}/route.ts`],outfile:out,bundle:true,platform:'node',format:'esm',plugins:[{name:'test-bindings',setup(b){b.onResolve({filter:/^\.\/connection$/},()=>({path:'env',namespace:'test'}));b.onLoad({filter:/.*/,namespace:'test'},()=>({contents:'export function connection(){return globalThis.__testEnv.DB;}'}));}}]});routes[key]=await import(out);
+ const out=path.join(temp,key+'.mjs');await build({entryPoints:[`lib/server/handlers/${key}.ts`],outfile:out,bundle:true,platform:'node',format:'esm',plugins:[{name:'test-bindings',setup(b){b.onResolve({filter:/^\.\/connection$/},()=>({path:'env',namespace:'test'}));b.onLoad({filter:/.*/,namespace:'test'},()=>({contents:'export function connection(){return globalThis.__testEnv.DB;}'}));}}]});routes[key]=await import(out);
  }
  const request=(route,body,cookie='',origin='https://studentos.test')=>new Request('https://studentos.test/api/'+route,{method:body?'POST':'GET',headers:{...(cookie?{cookie}:{}),...(body?{'content-type':'application/json',origin}: {})},body:body?JSON.stringify(body):undefined});
  const call=(route,body,cookie='',origin)=>routes[route][body?'POST':'GET'](request(route,body,cookie,origin));

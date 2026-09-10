@@ -2,23 +2,26 @@
 
 Kazakh/Russian student productivity app: landing, email/phone registration, onboarding, dashboard, subjects and notes, weekly schedule, Kanban tasks, financial tracking and budgets, goals, Pomodoro, XP, analytics and profile settings.
 
-## Deployment status
+## Hosting
 
-This repository is the Vercel / standard Next.js migration of the working Cloudflare edition. A PostgreSQL database must be connected and migrated before this version can accept registrations. No Vercel production deployment is claimed by this README.
+The Next.js website runs on Vercel. Its same-origin API routes proxy to the `studentos-api` Supabase Edge Function, which contains the authenticated application handlers and connects to PostgreSQL using Supabase's built-in `SUPABASE_DB_URL` secret. Vercel does not need database credentials.
 
-## Vercel setup
+## Deployment
 
-1. Import this repository into Vercel as a Next.js project, or deploy the tracked source through the Vercel connector.
-2. Connect a dedicated PostgreSQL database (Supabase transaction pooler supported).
-3. Set `DATABASE_URL` as an encrypted **server-only** environment variable. Never prefix it with `NEXT_PUBLIC_`, commit it, or send it in chat.
-4. Run `database/schema.sql` in that project's SQL editor, or run `npm run db:migrate` in a trusted environment with `DATABASE_URL` set.
-5. Run `npm run build`; then deploy and verify registration → onboarding → tasks, schedule, finance and goals.
+1. Apply `database/schema.sql` to the dedicated Supabase project.
+2. Run `npm ci` and `npm run build:edge`.
+3. Deploy `dist/studentos-api/index.js` as the `studentos-api` Edge Function. Gateway JWT verification is disabled because this API implements its own session authentication, including public registration/login. Every private operation verifies the hashed session and user ownership.
+4. Set the public API URL in `lib/server/proxy.ts`, or override it using the optional `STUDENTOS_API_URL` Vercel environment variable. This URL is not a secret.
+5. Import the repository into Vercel as Next.js and run the default `npm run build` command.
+6. Verify registration → onboarding → schedule/tasks/expenses/goals and login after logout against the deployed API.
 
-The application requires Node 22 or later. `npm run dev` starts Next.js. `npm run typecheck` checks TypeScript. `npm test` exercises route behavior and cross-user isolation against SQLite through a test adapter. It is not a live PostgreSQL or browser test.
+The application requires Node 24. `npm run dev` starts Next.js. `npm run typecheck` checks TypeScript. `npm test` exercises route behavior and cross-user isolation against SQLite through a test adapter. It is not a live PostgreSQL or browser test.
 
 ## Architecture
 
-- `app/api/`: authenticated same-origin endpoints
+- `app/api/`: same-origin API proxies on Vercel
+- `lib/server/handlers/`: shared authenticated handlers
+- `supabase/functions/studentos-api/`: Supabase Edge Function entrypoint
 - `components/studentos/`: bilingual interface and modules
 - `lib/server/connection.ts`: PostgreSQL adapter with bound parameters and atomic transactions
 - `lib/server/auth.ts`: salted password hashing, hashed sessions and server verification
@@ -33,6 +36,6 @@ Application-owned email/phone + password authentication is retained. This is not
 
 Database tables live in a private schema with RLS enabled and no direct client grants. The trusted server connection uses the database owner role; user isolation is enforced by API queries, not by auth.uid() policies. Credentials stay on the server.
 
-Jobs are explicitly sample vacancies; applications are local marks, not messages to employers. AI is a labeled rule-based demo. There is no email/SMS contact verification or password-recovery service yet. The full MVP has not passed browser QA. Do not call it production-ready until a real PostgreSQL connection and deployed user flows have been verified.
+Jobs are explicitly sample vacancies; applications are local marks, not messages to employers. AI is a labeled rule-based demo. There is no email/SMS contact verification or password-recovery service yet. Browser QA and live verification results are recorded in `DEPLOYMENT.md`.
 
 PostgreSQL driver transaction and pooler behavior follows the [Postgres.js documentation](https://github.com/porsager/postgres).

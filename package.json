@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.13.0"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -11,7 +11,8 @@
     "start": "next start",
     "test": "node tests/studentos-api.mjs",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "node scripts/migrate-postgres.mjs"
+    "db:migrate": "node scripts/migrate-postgres.mjs",
+    "build:edge": "node scripts/build-edge.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -57,7 +58,8 @@
     "typescript": "5.9.3",
     "vinext": "0.0.50",
     "vite": "8.0.13",
-    "wrangler": "4.92.0"
+    "wrangler": "4.92.0",
+    "esbuild": "0.28.1"
   },
   "type": "module"
 }
